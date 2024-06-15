@@ -30,7 +30,7 @@
             }
         }
 
-        public void Play(string url)
+        public void Play(string? url)
         {
             VideoUrl = url;
 

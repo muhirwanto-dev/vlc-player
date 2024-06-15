@@ -15,6 +15,11 @@
             <Button Text="Play" Clicked="BtnPlay_Clicked"/>
             <Button Text="Pause" Clicked="BtnPause_Clicked"/>
             <Button Text="Stop" Clicked="BtnStop_Clicked"/>
+            <VerticalStackLayout>
+                <Entry Text="{Binding Url}"
+                       Placeholder="Enter the video url"/>
+                <Button Text="Play Url" Clicked="BtnPlayUrl_Clicked"/>
+            </VerticalStackLayout>
 
         </VerticalStackLayout>
     </ScrollView>

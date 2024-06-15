@@ -2,6 +2,18 @@
 {
     public partial class MainPage : ContentPage
     {
+        private string? _url;
+        public string? Url
+        {
+            get => _url;
+            set
+            {
+                _url = value;
+
+                OnPropertyChanged();
+            }
+        }
+
         public MainPage()
         {
             InitializeComponent();
@@ -22,6 +34,11 @@
         private void BtnStop_Clicked(object sender, EventArgs e)
         {
             VideoViewer.Stop();
+        }
+
+        private void BtnPlayUrl_Clicked(object sender, EventArgs e)
+        {
+            VideoViewer.Play(Url);
         }
     }
 
