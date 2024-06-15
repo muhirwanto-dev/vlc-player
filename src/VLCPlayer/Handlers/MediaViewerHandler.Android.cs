@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Android.Content;
-using LibVLCSharp.Platforms.Android;
+﻿using LibVLCSharp.Platforms.Android;
 using LibVLCSharp.Shared;
 using Microsoft.Maui.Handlers;
 using VLCPlayer.Controls;
@@ -21,69 +15,130 @@ namespace VLCPlayer.Handlers
 
         protected override void ConnectHandler(VideoView nativeView)
         {
-            base.ConnectHandler(nativeView);
+            _videoView = nativeView;
 
-            _libVLC = new LibVLC(enableDebugLogs: true);
-            _mediaPlayer = new LibVLCSharp.Shared.MediaPlayer(_libVLC)
-            {
-                EnableHardwareDecoding = true
-            };
+            PrepareMedia();
 
-            _videoView = nativeView ?? new VideoView(Context);
-            _videoView.MediaPlayer = _mediaPlayer;
+            VirtualView.OnPlayEvent += OnPlay;
+            VirtualView.OnPauseEvent += OnPause;
+            VirtualView.OnStopEvent += OnStop;
 
-            HandleUrl(VirtualView.VideoUrl);
-
-            if (nativeView != null)
-            {
-                base.ConnectHandler(nativeView);
-            }
+            base.ConnectHandler(_videoView);
         }
 
         protected override void DisconnectHandler(VideoView nativeView)
         {
             nativeView.Dispose();
+
+            VirtualView.OnPlayEvent -= OnPlay;
+            VirtualView.OnPauseEvent -= OnPause;
+            VirtualView.OnStopEvent -= OnStop;
+
             base.DisconnectHandler(nativeView);
         }
 
-        private void HandleUrl(string url)
+        private void PrepareMedia()
+        {
+            if (_libVLC == null || _mediaPlayer == null)
+            {
+                _libVLC ??= new LibVLC(enableDebugLogs: true);
+                _mediaPlayer ??= new LibVLCSharp.Shared.MediaPlayer(_libVLC)
+                {
+                    EnableHardwareDecoding = true
+                };
+
+                _videoView!.MediaPlayer = _mediaPlayer;
+            }
+        }
+
+        private void Play(string? url)
+        {
+            PrepareMedia();
+
+            if (_mediaPlayer!.IsPlaying)
+            {
+                return;
+            }
+            // Resume
+            else if (_mediaPlayer.WillPlay)
+            {
+                _mediaPlayer.Play();
+
+                return;
+            }
+
+            if (string.IsNullOrEmpty(url))
+            {
+                return;
+            }
+
+            if (url.EndsWith("/"))
+            {
+                url = url.TrimEnd('/');
+            }
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                var media = new Media(_libVLC, url, FromType.FromLocation);
+
+                _mediaPlayer.NetworkCaching = 1500;
+                _mediaPlayer.Media = media;
+                _mediaPlayer.Mute = false;
+
+                _mediaPlayer.Play();
+            }
+        }
+
+        private void Pause()
+        {
+            _mediaPlayer?.Pause();
+        }
+
+        private void Stop()
+        {
+            if (_mediaPlayer?.Media != null)
+            {
+                _mediaPlayer.Stop();
+                _mediaPlayer.Media.Dispose();
+                _mediaPlayer.Media = null;
+                _mediaPlayer = null;
+
+                PlatformView.MediaPlayer = null;
+                PlatformView.TriggerLayoutChangeListener();
+            }
+        }
+
+        private void OnPlay(object? sender, EventArgs arg)
         {
             try
             {
-                if (_libVLC == null || _mediaPlayer == null || _videoView == null)
-                {
-                    return;
-                }
-
-                if (url.EndsWith("/"))
-                {
-                    url = url.TrimEnd('/');
-                }
-
-                //url = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-
-                if (!string.IsNullOrEmpty(url))
-                {
-                    var media = new Media(_libVLC, url, FromType.FromLocation);
-
-                    _mediaPlayer.NetworkCaching = 1500;
-
-                    if (_mediaPlayer.Media != null)
-                    {
-                        _mediaPlayer.Stop();
-                        _mediaPlayer.Media.Dispose();
-                    }
-
-                    _mediaPlayer.Media = media;
-                    _mediaPlayer.Mute = true;
-
-                    _videoView.MediaPlayer?.Play();
-                }
+                Play(VirtualView.VideoUrl);
             }
             catch (Exception ex)
             {
             }
         }
 
+        private void OnPause(object? sender, EventArgs arg)
+        {
+            try
+            {
+                Pause();
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        private void OnStop(object? sender, EventArgs arg)
+        {
+            try
+            {
+                Stop();
+            }
+            catch (Exception ex)
+            {
+            }
+        }
     }
 }

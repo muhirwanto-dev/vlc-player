@@ -2,23 +2,26 @@
 {
     public partial class MainPage : ContentPage
     {
-        int count = 0;
-
         public MainPage()
         {
             InitializeComponent();
+
+            BindingContext = this;
         }
 
-        private void OnCounterClicked(object sender, EventArgs e)
+        private void BtnPlay_Clicked(object sender, EventArgs e)
         {
-            count++;
+            VideoViewer.Play();
+        }
 
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
+        private void BtnPause_Clicked(object sender, EventArgs e)
+        {
+            VideoViewer.Pause();
+        }
 
-            SemanticScreenReader.Announce(CounterBtn.Text);
+        private void BtnStop_Clicked(object sender, EventArgs e)
+        {
+            VideoViewer.Stop();
         }
     }
 
